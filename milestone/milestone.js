@@ -2,12 +2,14 @@ const { Decimal128 } = require('bson')
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema
 
+const taskSchema = require('../task/task');
+
 const milestoneSchema = new Schema({
     overview:{
         type: String,
         required: true
     },
-    amouont:{
+    amount:{
         type: Decimal128,
         required: true
     },
@@ -22,10 +24,17 @@ const milestoneSchema = new Schema({
     end_date: {
         type: Date,
         required: true
-    }
+    },
+
+    tasks: [
+        {
+            type:taskSchema,
+            required: false
+        }
+    ]
 },
 {
     timestamps: true
 })
 
-module.exports = mongoose.model('Milestone', milestoneSchema)
+module.exports = milestoneSchema

@@ -8,7 +8,12 @@ const projectSchema = new Schema({
     name: {
         type: String,
         required: true
-    }, 
+    },
+
+    p_manager: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+    },
 
     startTime: {
         type: Date,
