@@ -4,13 +4,15 @@ const mongoose = require('mongoose');
 const bodyParser = require('body-parser')
 
 const authRoute = require('./auth/authRoutes')
-const projectRoute = require('./project/projectRoutes')
+const projectRoute = require('./project/projectRoutes');
+const milestoneRoute = require('./milestone/milestoneRoutes');
 
 app.use(bodyParser.json());
 
 
 app.use('/auth', authRoute);
-app.use('/project', projectRoute)
+app.use('/project', projectRoute);
+app.use('/milestone', milestoneRoute);
 
 app.use((error, req, res, next) => {
     

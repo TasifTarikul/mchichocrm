@@ -10,17 +10,24 @@ const projectSchema = new Schema({
         required: true
     },
 
-    p_manager: {
-        type: Schema.Types.ObjectId,
-        ref: 'User'
+    creator: {
+        type:Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
     },
 
-    startTime: {
+    p_manager: {
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
+
+    start_date: {
         type: Date,
         required: true
     },
 
-    endTime: {
+    end_date: {
         type: Date,
         required: true
     },

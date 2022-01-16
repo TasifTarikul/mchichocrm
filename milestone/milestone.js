@@ -5,6 +5,15 @@ const Schema = mongoose.Schema
 const taskSchema = require('../task/task');
 
 const milestoneSchema = new Schema({
+    name:{
+        type: String,
+        required: true
+    },
+    creator:{
+        type: Schema.Types.ObjectId,
+        ref: 'User',
+        required: true
+    },
     overview:{
         type: String,
         required: true

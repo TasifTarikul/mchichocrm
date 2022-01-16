@@ -15,13 +15,15 @@ exports.signup = (req, res, next) => {
     const email = req.body.email;
     const name = req.body.name;
     const password = req.body.password;
+    const type = req.body.type
 
     bcrypt.hash(password, 12)
     .then(hashedPw => {
         const user = new User({
             email:email,
             name: name,
-            password: hashedPw
+            password: hashedPw,
+            type: type
         })
 
         return user.save();
@@ -78,3 +80,46 @@ exports.signin = (req, res, next) => {
         next(err)
     })
 }
+
+exports.listUser = (req, res, next) => {
+
+    const fltr_by_name = req.query.name;
+    const currentPage = req.query.page || 1;
+    const limit = req.query.limit || 0;
+    const skip = (currentPage -1) * limit;
+    let totalUser;
+    let totalPages;
+    let query = User.find();
+
+    if(fltr_by_name && fltr_by_name!="")
+    {
+        query = User.find({ name: fltr_by_name });
+    }
+    
+    query.clone().countDocuments()
+    .then(count=>{
+        totalUser = count;
+        return query
+        .skip(skip)
+        .limit(limit)
+    })
+    .then(users=>{
+        totalPages = (Math.ceil(totalUser/limit) === Infinity)? 1 : Math.ceil(totalUser/limit);
+        res
+        .status(200)
+        .json({
+            message: 'Fetched users',
+            totalUser: totalUser,
+            totalPages: totalPages,
+            currentPage: currentPage,
+            data: users
+        })
+    })
+    .catch(err=>{
+        if(!err.statusCode){
+            err.statusCode = 500;
+        }
+        next(err)
+    })
+}
+

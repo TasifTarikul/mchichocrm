@@ -4,6 +4,7 @@ const router = express.Router();
 const authController = require('./authControllers');
 
 const User = require('./user');
+const isAuth = require('../middleware/is_auth');
 
 
 router.put('/signup', [
@@ -30,5 +31,7 @@ router.put('/signup', [
 ], authController.signup);
 
 router.post('/signin', authController.signin);
+
+router.get('/list_user', isAuth, authController.listUser)
 
 module.exports = router;
