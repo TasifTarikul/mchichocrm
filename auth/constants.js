@@ -1,5 +1,5 @@
 exports.userType = {
-        superAdmin: 0,
-        client: 1,
-        developer: 2,
+        superAdmin: [0,  'Super admin'],
+        client: [1,  'Client'],
+        developer: [2, 'Developer']
 }

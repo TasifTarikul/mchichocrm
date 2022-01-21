@@ -1,7 +1,9 @@
 const { validationResult } = require('express-validator');
+const milestone = require('../milestone/milestone');
 const Milestone = require('../milestone/milestone');
-const project = require('../project/project');
 const Project = require('../project/project');
+const History = require('../history/history');
+const historyStatusConstants = require('../history/constants');
 
 exports.addMilestone = (req, res, next) => {
 
@@ -12,31 +14,40 @@ exports.addMilestone = (req, res, next) => {
         throw error;
     }
 
-    const projectId = req.body.projectId;
     const name = req.body.name;
     const creator = req.userId;
     const overview = req.body.overview;
-    const amount = req.body.amount;
+    const budget = req.body.budget;
     const m_manager = req.body.m_manager;
     const start_date = req.body.start_date;
     const end_date = req.body.end_date;
+    const projectId = req.body.project;
 
-    const milestone = {
+    const milestone = new Milestone({
         name: name,
         creator: creator,
         overview: overview,
-        amount: amount,
+        budget: budget,
         m_manager: m_manager,
         start_date: start_date,
-        end_date: end_date
-    }
-
-    Project.findById(projectId)
-    .then(project =>{
-        project.milestones.push(milestone);
-        return project.save();
+        end_date: end_date,
+        project: projectId
     })
-    .then(result => {
+
+    milestone.save()
+    .then(milestone => {
+
+        const history = new History({
+            description: milestone.name,
+            status: historyStatusConstants.historyStatus.start[0],
+            user: req.userId,
+            milestone: milestone._id,
+            project: projectId
+        })
+
+        return history.save()
+    })
+    .then(history=>{
         res.status(201).json({
             message: "Milestone created",
             data: milestone
@@ -53,27 +64,154 @@ exports.addMilestone = (req, res, next) => {
 exports.listMilestone = (req, res, next) => {
     
     const fltr_by_name = req.query.name;
-
+    const fltr_by_project = req.query.project;
     const currentPage = req.query.page || 1;
     const limit = req.query.limit || 0;
-    const skip = req.query.skip;
-    let totalProjects;
-    let totalpages;
+    const skip = (currentPage -1) * limit;
+    let totalMilestones;
+    let totalPages;
     let query= Milestone.find();
+
+    console.log(req.query);
+
+    if(fltr_by_project && fltr_by_project!="")
+    {
+        query = Milestone.find({ 
+            project: fltr_by_project 
+        }).explain("executionStats");
+    }
+
+    // query.clone().countDocuments()
+    // .then(count =>{
+    //     totalMilestones = count;
+    //     return query
+    //     .skip(skip)
+    //     .limit(limit)
+    // })
+    query
+    .then(milestones =>{
+        totalPages = (Math.ceil(totalMilestones/limit) === Infinity)? 1 : Math.ceil(totalMilestones/limit);
+
+        res.json({
+            message: 'Milestones fetched',
+            count: totalMilestones,
+            totalPages: totalPages,
+            currentPage: currentPage,
+            status: 200,
+            data: milestones
+        })
+    })
+    .catch(err =>{
+        if(!err.statusCode){
+            statusCode = 500;
+        }
+
+        next(err);
+    })
 
 }
 
 exports.retrieveMilestone = (req, res, next) =>{
-    const milestoneId = req.body.milestoneId;
-    
+    const milestoneId = req.params.milestoneId;
 
+    Milestone.findById(milestoneId)
+    .then(milestone =>{
+        if(!milestone){
+            const error = new Error('No milestone was found with this Id '+milestoneId);
+            error.statusCode=404;
+            throw error;
+        }
+
+        res.json({
+            message: 'Milestone retrieved',
+            data: milestone
+        })
+    })
+    .catch(err =>{
+        if(!err.statusCode){
+            err.statusCode= 500;
+        }
+        next(err)
+    })
+    
 } 
 
 exports.updateMilestone = (req, res, next) =>{
+
+    const milestoneId = req.params.milestoneId;
+    const name = req.body.name;
+    const overview = req.body.overview;
+    const budget = req.body.budget;
+    const m_manager = req.body.m_manager;
+    const start_date = req.body.start_date;
+    const end_date = req.body.end_date;
+    let updatedMilestone;
+
+    Milestone.findById(milestoneId)
+    .then(milestone => {
+        if(!mileston){
+            const error = new Error('No milestone was found with this Id');
+            error.statusCode=404;
+            throw error;
+        }
+
+        milestone.name = name;
+        milestone.overview = overview;
+        milestone.budget = budget;
+        milestone.m_manager = m_manager;
+        milestone.start_date = start_date;
+        milestone.end_date = end_date;
+
+        return milestone.save();
+    })
+    .then(milestone=>{
+        updatedMilestone=milestone;
+
+        const history = new History ({
+            description: milestone.name,
+            status: historyStatusConstants.historyStatus.update[0],
+            user: req.userId,
+            project: milestone.project,
+            milestone: milestone._id
+        })
+
+        return history.save()
+
+    })
+    .then(milestone => {
+        res.json({
+            message: 'Milestone Updated Successfully',
+            status: 200,
+            data: updatedMilestone
+        })
+    })
+    .catch(err=>{
+        if(!err.statusCode){
+            err.statusCode = 500;
+        }
+        next(err);
+    })
     
 }
 
 exports.deleteMilestone = (req, res, next) =>{
-    const milestoneId = req.query.milestoneId;
+    const milestoneId = req.params.milestoneId;
+
+    Milestone.findById(milestoneId)
+    .then(milestone=>{
+        if(!milestone){
+            const error = new Error('No milestone was found with this Id');
+            error.statusCode=404;
+            throw error;
+        }
+
+        return Milestone.findByIdAndRemove(milestoneId)
+    })
+    .then(result =>{
+        res.json({
+            message: 'Milestone deleted Successfully',
+            status: 200
+        })
+    })
     
 }

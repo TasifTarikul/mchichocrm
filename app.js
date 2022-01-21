@@ -1,11 +1,13 @@
 const express = require('express');
 const app = express();
 const mongoose = require('mongoose');
-const bodyParser = require('body-parser')
+const bodyParser = require('body-parser');
 
 const authRoute = require('./auth/authRoutes')
 const projectRoute = require('./project/projectRoutes');
 const milestoneRoute = require('./milestone/milestoneRoutes');
+const taskRoute = require('./task/taskRoutes');
+const commentRoute = require('./comment/commentRoutes')
 
 app.use(bodyParser.json());
 
@@ -13,6 +15,10 @@ app.use(bodyParser.json());
 app.use('/auth', authRoute);
 app.use('/project', projectRoute);
 app.use('/milestone', milestoneRoute);
+app.use('/task', taskRoute);
+app.use('/comment', commentRoute);
+
+
 
 app.use((error, req, res, next) => {
     

@@ -2,7 +2,6 @@ const { Decimal128 } = require('bson');
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
-const milestoneSchema = require('../milestone/milestone');
 
 const projectSchema = new Schema({
     name: {
@@ -13,6 +12,11 @@ const projectSchema = new Schema({
     creator: {
         type:Schema.Types.ObjectId,
         ref: 'User',
+        required: true
+    },
+    
+    overview: {
+        type: String,
         required: true
     },
 
@@ -36,14 +40,6 @@ const projectSchema = new Schema({
         type: Decimal128,
         required: true
     },
-
-    milestones: [
-        {
-            type: milestoneSchema,
-            required: false
-        }
-    ]
-    
 },
 {
     timestamps: true

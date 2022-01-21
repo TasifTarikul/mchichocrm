@@ -16,6 +16,20 @@ const taskSchema = new Schema({
     description: {
         type: String,
         required: true
+    },
+
+    project: {
+        type: Schema.Types.ObjectId,
+        ref: 'Project',
+        required: true,
+        index: true
+    },
+
+    milestone: {
+        type: Schema.Types.ObjectId,
+        ref: 'Milestone',
+        required: true,
+        index: true
     }
 },
 {
@@ -23,4 +37,4 @@ const taskSchema = new Schema({
 }
 )
 
-module.exports = taskSchema;
+module.exports = mongoose.model('Task', taskSchema);

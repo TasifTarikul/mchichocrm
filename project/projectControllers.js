@@ -2,6 +2,9 @@ const { validationResult, Result } = require('express-validator')
 const Project = require('./project');
 const User = require('../auth/user');
 const project = require('./project');
+const History = require('../history/history');
+const historyStatusConstants = require('../history/constants');
+
 
 
 exports.createProject = (req, res, next) => {
@@ -15,14 +18,17 @@ exports.createProject = (req, res, next) => {
 
     const name = req.body.name;
     const creator = req.userId;
+    const overview = req.body.overview;
     const p_manager = req.body.p_manager;
     const start_date = req.body.start_date;
     const end_date = req.body.end_date;
     const budget = req.body.budget;
 
+
     const project = new Project({
         name: name,
         creator: creator,
+        overview: overview,
         p_manager: p_manager,
         start_date: start_date,
         end_date: end_date,
@@ -31,7 +37,21 @@ exports.createProject = (req, res, next) => {
 
     project.save()
     .then(result => {
-        return User.findById(p_manager)
+
+        console.log('After project saved');
+        console.log(result);
+        const history = new History ({
+            description: result.name,
+            user: result.creator,
+            status: historyStatusConstants.historyStatus.start[0],
+            project: result._id
+        })
+
+        return history.save()
+        
+    })
+    .then(history =>{
+        return User.findById(p_manager);
     })
     .then(user => {
         res.status(201).json({
@@ -73,12 +93,12 @@ exports.listProject = (req, res, next) => {
         .limit(limit)
     })
     .then(projects=>{
-        totalPages = (Math.ceil(totalProjects/limit) === Infinity)? 1 : Math.ceil(totalProjects/limit),
+        totalPages = (Math.ceil(totalProjects/limit) === Infinity)? 1 : Math.ceil(totalProjects/limit);
         res
         .status(200)
         .json({
-            totalPages: totalPages,
             message: "Projects fetched",
+            count: totalProjects,
             totalPages: totalPages,
             currentPage: currentPage,
             data: projects
@@ -95,9 +115,14 @@ exports.listProject = (req, res, next) => {
 exports.retrieveProject = (req, res, next) => {
 
     const projectId = req.params.projectId;
-    
+    console.log(projectId);
     Project.findById(projectId)
     .then(project =>{
+        if(!project){
+            const error = new Error('No project was found with this Id');
+            error.statusCode = 404
+            throw error;
+        }
         res.status(201).json({
             message: 'Project Fetched',
             data: project
@@ -121,21 +146,50 @@ exports.updateProject = (req, res, next) =>{
 
     const projectId = req.params.projectId;
     const name = req.body.name;
+    const overview = req.body.overview;
     const p_manager = req.body.p_manager;
     const start_date = req.body.start_date;
     const end_date = req.body.end_date;
     const budget = req.body.budget;
 
+    let updatedProject;
+
 
     Project.findById(projectId)
     .then(project =>{
+
+        if(!project){
+            const error = new Error('No project was found with this Id');
+            error.statusCode = 404
+            throw error;
+        }
+
         project.name = name;
+        project.overview = overview;
         project.p_manager = p_manager;
         project.start_date = start_date;
         project.end_date = end_date;
         project.budget = budget;
 
         return project.save();
+    })
+    .then(project=>{
+        updatedProject = project
+        const history = new History ({
+            description: project.name,
+            user: req.userId,
+            status: historyStatusConstants.historyStatus.update[0],
+            project: project._id
+        })
+
+        return history.save()
+    })
+    .then(history => {
+        res.json({
+            message: "Project Updated Successfully",
+            status: 200,
+            data: updatedProject
+        })
     })
     .catch(err => {
         if(!err.statusCode){
@@ -150,8 +204,19 @@ exports.deleteProject = (req, res, next) => {
     
     Project.findById(projectId)
     .then(project=>{
-        res.status(200).json({
-            message: "Project deleted"
+
+        if(!project){
+            const error = new Error('No Project was found with this id');
+            error.statusCode = 404;
+            throw error;
+        }
+        
+        return Project.findByIdAndRemove(projectIds)
+    })
+    .then(result => {
+        res.json({
+            message: "Project deleted",
+            status:200
         })
     })
     .catch(err=>{

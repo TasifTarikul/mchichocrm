@@ -2,7 +2,6 @@ const { Decimal128 } = require('bson')
 const mongoose = require('mongoose');
 const Schema = mongoose.Schema
 
-const taskSchema = require('../task/task');
 
 const milestoneSchema = new Schema({
     name:{
@@ -18,7 +17,7 @@ const milestoneSchema = new Schema({
         type: String,
         required: true
     },
-    amount:{
+    budget:{
         type: Decimal128,
         required: true
     },
@@ -35,15 +34,15 @@ const milestoneSchema = new Schema({
         required: true
     },
 
-    tasks: [
-        {
-            type:taskSchema,
-            required: false
-        }
-    ]
+    project: {
+        type: Schema.Types.ObjectId,
+        ref: 'Project',
+        required: true,
+        index:true
+    }
 },
 {
     timestamps: true
 })
 
-module.exports = milestoneSchema
+module.exports = mongoose.model('Milestone', milestoneSchema);
