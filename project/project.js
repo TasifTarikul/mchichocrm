@@ -37,7 +37,7 @@ const projectSchema = new Schema({
     },
 
     budget: {
-        type: Decimal128,
+        type: Number,
         required: true
     },
 },

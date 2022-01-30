@@ -29,7 +29,7 @@ exports.signup = (req, res, next) => {
         return user.save();
     })
     .then(result => {
-        res.status(201).json({ message: "User created", userId: result._id })
+        res.status(201).json({ message: "User created" })
     })
     .catch(err => {
         if(!err.statusCode){
@@ -82,7 +82,6 @@ exports.signin = (req, res, next) => {
 }
 
 exports.listUser = (req, res, next) => {
-
     const fltr_by_name = req.query.name;
     const currentPage = req.query.page || 1;
     const limit = req.query.limit || 0;

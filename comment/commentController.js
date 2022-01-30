@@ -1,6 +1,6 @@
 const { validationResult } = require('express-validator');
-const comment = require('./comment');
-
+const History = require('../history/history');
+const historStatusConstants = require('../history/constants').historyStatus;
 const Comment = require('./comment');
 
 exports.addComment = (req, res, next) => {
@@ -23,11 +23,22 @@ exports.addComment = (req, res, next) => {
     })
 
     comment.save()
-    .then(result => {
+    .then(comment=>{
+        const history = new History({
+            object: 'Comment',
+            description: comment.text,
+            status: historStatusConstants.start[0],
+            user: creator,
+            comment: comment._id,
+            project: projectId
+        })
+        return history.save();
+    })
+    .then(history => {
         res.json({
-            message: 'Comment created successfully',
+            message: 'Comment Created Successfully',
             status: 200,
-            data: result,
+            data: comment
         })
     })
     .catch(err => {
@@ -46,7 +57,7 @@ exports.listComment = (req, res, next) => {
     const skip = req.query.skip;
     let totalPages;
     let totalComments;
-    let query = Comment.find();
+    let query = Comment.find({project: fltr_by_project});
 
     query.clone().countDocuments()
     .then(count=>{
@@ -60,6 +71,7 @@ exports.listComment = (req, res, next) => {
         res.json({
             message: 'Comments Fetched',
             status: 200,
+            currentPage: currentPage,
             totalPages: totalPages,
             count: totalComments,
             data: comments

@@ -1,11 +1,8 @@
 const { validationResult, Result } = require('express-validator')
 const Project = require('./project');
 const User = require('../auth/user');
-const project = require('./project');
 const History = require('../history/history');
-const historyStatusConstants = require('../history/constants');
-
-
+const historyStatusConstants = require('../history/constants').historyStatus;
 
 exports.createProject = (req, res, next) => {
     
@@ -41,9 +38,10 @@ exports.createProject = (req, res, next) => {
         console.log('After project saved');
         console.log(result);
         const history = new History ({
+            object: 'Project',
             description: result.name,
             user: result.creator,
-            status: historyStatusConstants.historyStatus.start[0],
+            status: historyStatusConstants.start[0],
             project: result._id
         })
 
@@ -72,19 +70,21 @@ exports.createProject = (req, res, next) => {
 
 exports.listProject = (req, res, next) => {
 
-    const fltr_by_name = req.query.name;
     const currentPage = req.query.page || 1;
     const limit = req.query.limit || 0;
     const skip = (currentPage -1) * limit;
-    let totalProjects;
+    let totalProjects;  
     let totalPages;
-    let query = Project.find();
-
-    if(fltr_by_name && fltr_by_name!="")
-    {
-        query = Project.find({ name: fltr_by_name });
-    }
-
+    let query = Project.find({creator: req.userId});
+    
+    // const filters = req.query;
+    // for( const property in filters){
+    //     try {
+    //         query.where(property).equals(filters[property]);
+    //     } catch (error) {
+    //         continue;
+    //     }
+    // }
     query.clone().countDocuments()
     .then(count => {
         totalProjects = count;
@@ -176,9 +176,10 @@ exports.updateProject = (req, res, next) =>{
     .then(project=>{
         updatedProject = project
         const history = new History ({
+            object: 'Project',
             description: project.name,
             user: req.userId,
-            status: historyStatusConstants.historyStatus.update[0],
+            status: historyStatusConstants.update[0],
             project: project._id
         })
 

@@ -18,7 +18,7 @@ const milestoneSchema = new Schema({
         required: true
     },
     budget:{
-        type: Decimal128,
+        type: Number,
         required: true
     },
     m_manager: {

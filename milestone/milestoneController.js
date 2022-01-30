@@ -3,7 +3,7 @@ const milestone = require('../milestone/milestone');
 const Milestone = require('../milestone/milestone');
 const Project = require('../project/project');
 const History = require('../history/history');
-const historyStatusConstants = require('../history/constants');
+const historyStatusConstants = require('../history/constants').historyStatus;
 
 exports.addMilestone = (req, res, next) => {
 
@@ -38,8 +38,9 @@ exports.addMilestone = (req, res, next) => {
     .then(milestone => {
 
         const history = new History({
+            object: 'Milestone',
             description: milestone.name,
-            status: historyStatusConstants.historyStatus.start[0],
+            status: historyStatusConstants.start[0],
             user: req.userId,
             milestone: milestone._id,
             project: projectId
@@ -62,33 +63,21 @@ exports.addMilestone = (req, res, next) => {
 }
 
 exports.listMilestone = (req, res, next) => {
-    
-    const fltr_by_name = req.query.name;
     const fltr_by_project = req.query.project;
     const currentPage = req.query.page || 1;
     const limit = req.query.limit || 0;
     const skip = (currentPage -1) * limit;
     let totalMilestones;
     let totalPages;
-    let query= Milestone.find();
+    let query= Milestone.find({project:fltr_by_project});
 
-    console.log(req.query);
-
-    if(fltr_by_project && fltr_by_project!="")
-    {
-        query = Milestone.find({ 
-            project: fltr_by_project 
-        }).explain("executionStats");
-    }
-
-    // query.clone().countDocuments()
-    // .then(count =>{
-    //     totalMilestones = count;
-    //     return query
-    //     .skip(skip)
-    //     .limit(limit)
-    // })
-    query
+    query.clone().countDocuments()
+    .then(count =>{
+        totalMilestones = count;
+        return query
+        .skip(skip)
+        .limit(limit)
+    })
     .then(milestones =>{
         totalPages = (Math.ceil(totalMilestones/limit) === Infinity)? 1 : Math.ceil(totalMilestones/limit);
 
@@ -149,7 +138,7 @@ exports.updateMilestone = (req, res, next) =>{
 
     Milestone.findById(milestoneId)
     .then(milestone => {
-        if(!mileston){
+        if(!milestone){
             const error = new Error('No milestone was found with this Id');
             error.statusCode=404;
             throw error;
@@ -168,17 +157,17 @@ exports.updateMilestone = (req, res, next) =>{
         updatedMilestone=milestone;
 
         const history = new History ({
+            object: 'Milestone',
             description: milestone.name,
-            status: historyStatusConstants.historyStatus.update[0],
+            status: historyStatusConstants.update[0],
             user: req.userId,
             project: milestone.project,
             milestone: milestone._id
         })
-
         return history.save()
 
     })
-    .then(milestone => {
+    .then(history => {
         res.json({
             message: 'Milestone Updated Successfully',
             status: 200,

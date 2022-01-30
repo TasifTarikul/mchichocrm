@@ -7,8 +7,8 @@ const isAuth = require('../middleware/is_auth');
 
 router.post('/add_task', isAuth, taskController.addTask);
 router.get('/list_task', isAuth, taskController.listTask);
-router.get('/detail_task', isAuth, taskController.retrieveTask);
-router.put('/update_task', isAuth, taskController.updateTask);
-router.delete('/delete_task', isAuth, taskController.deleteTask);
+router.get('/detail_task/:taskId', isAuth, taskController.retrieveTask);
+router.put('/update_task/:taskId', isAuth, taskController.updateTask);
+router.delete('/delete_task/:taskId', isAuth, taskController.deleteTask);
 
 module.exports = router;

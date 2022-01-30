@@ -7,7 +7,9 @@ const authRoute = require('./auth/authRoutes')
 const projectRoute = require('./project/projectRoutes');
 const milestoneRoute = require('./milestone/milestoneRoutes');
 const taskRoute = require('./task/taskRoutes');
-const commentRoute = require('./comment/commentRoutes')
+const commentRoute = require('./comment/commentRoutes');
+const historyRoute = require('./history/historyRoutes');
+const paymentRoute = require('./payment/paymentRoutes');
 
 app.use(bodyParser.json());
 
@@ -17,6 +19,10 @@ app.use('/project', projectRoute);
 app.use('/milestone', milestoneRoute);
 app.use('/task', taskRoute);
 app.use('/comment', commentRoute);
+app.use('/history', historyRoute);
+app.use('/payment', paymentRoute);
+
+
 
 
 

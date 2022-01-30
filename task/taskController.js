@@ -3,6 +3,9 @@ const { validationResult } = require('express-validator');
 const Task = require('../task/task');
 const Milestone = require('../milestone/milestone');
 const task = require('../task/task');
+const History = require('../history/history');
+
+const historyStatusConstants = require('../history/constants').historyStatus;
 
 exports.addTask = (req, res, next) => {
 
@@ -14,8 +17,8 @@ exports.addTask = (req, res, next) => {
     }
 
     const creator = req.userId;
-    const projectId = req.body.Id
-    const milestoneId = req.body.milestoneId;
+    const projectId = req.body.project;
+    const milestoneId = req.body.milestone;
     const name = req.body.name;
     const description = req.body.description;
 
@@ -28,7 +31,19 @@ exports.addTask = (req, res, next) => {
     })
 
     task.save()
-    .then(task => {
+    .then(task=>{
+        const history = new History({
+            object: 'Task',
+            description: task.name,
+            status: historyStatusConstants.start[0],
+            user: creator,
+            task: task._id,
+            project: projectId
+        })
+
+        return history.save();
+    })
+    .then(history => {
         res.json({
             message: 'New task created',
             status: 200,
@@ -43,16 +58,24 @@ exports.addTask = (req, res, next) => {
     })
 }
 
-exports.listTask = (re, res, next) => {
-    const fltr_by_name = req.query.name;
-    const fltr_by_milestone = req.query.milestone;
+exports.listTask = (req, res, next) => {
     const fltr_by_project = req.query.project;
-    const currentPage=req.query.page;
-    const limit = req.query.limit;
+    const fltr_by_milestone = req.query.milestone;
+    const currentPage=req.query.page || 1;
+    const limit = req.query.limit || 0;
     const skip = (currentPage -1) * limit;
     let totalPages;
     let totalTasks;
     let query = Task.find();
+    filters = req.query;
+
+    for(const property in filters){
+        try{
+            query.where(property).equals(filters[property])
+        }catch(error){
+            continue;
+        }
+    }
 
     query.clone().countDocuments()
     .then(count =>{
@@ -110,7 +133,8 @@ exports.retrieveTask = (req, res, next) =>{
 exports.updateTask = (req, res, next) => {
     const taskId = req.params.taskId;
     const name = req.body.name;
-    const desciption = req.body.description;
+    const description = req.body.description;
+    let updatedTask;
     
     Task.findById(taskId)
     .then(task => {
@@ -120,10 +144,28 @@ exports.updateTask = (req, res, next) => {
             throw error;
         }
 
+        task.name = name;
+        task.description = description;
+        return task.save();
+    })
+    .then(task=>{
+        updatedTask = task;
+
+        const history = new History({
+            object: 'Task',
+            description: task.name,
+            status: historyStatusConstants.update[0],
+            user: re.userId,
+            task: task._id,
+            project: task.project
+        })
+        return history.save();
+    })
+    .then(histroy=>{
         res.json({
-            message: 'Task Fetched',
+            message: 'Task Updated Successfully',
             status: 200,
-            data: task
+            data: updatedTask
         })
     })
     .catch(err => {
